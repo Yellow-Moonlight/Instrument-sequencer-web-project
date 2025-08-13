@@ -1,0 +1,12 @@
+{
+  "name": "instrument-sequencer",
+  "version": "1.0.0",
+  "description": "A web-based instrument sequencer.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

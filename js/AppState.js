@@ -1,64 +1,165 @@
-/**
- * Manages the entire state of the instrument sequencer application.
- * Follows the structure defined in docs/design.md.
- */
 export class AppState {
     constructor() {
-        this.state = {
-            viewMode: 'edit', // 'edit' or 'present'
-            tempo: 120,
-            grid: {
-                rows: 8,
-                cols: 8
-            },
-            tracks: Array(8).fill({ volume: 1.0, pitch: 0 }),
-            clips: Array(8).fill(null).map(() => 
-                Array(8).fill({ samplePath: null, state: 'empty', audioBuffer: null, pitch: 0 })
-            )
-        };
+        this.rows = 6;
+        this.cols = 5;
+
+        this.grid = Array(this.rows).fill(null).map(() => Array(this.cols).fill(null).map(() => ({
+            sample: null,
+            state: 'stopped',
+            volume: 0.8
+        })));
+
+        this.tempo = 120;
+        this.isReplaceMode = false;
+        this.currentBeat = 0;
+
+        this.isRecording = false;
+        this.recordingStartTime = 0;
+        this.recordedBlob = null;
+
+        this.trackMutes = Array(this.cols).fill(false);
+        this.trackSolos = Array(this.cols).fill(false);
+
+        this.listeners = [];
     }
 
-    /**
-     * Returns the current state.
-     * @returns {object} The application state.
-     */
-    getState() {
-        return this.state;
+    subscribe(listener) {
+        this.listeners.push(listener);
     }
 
-    /**
-     * Updates a property in the state.
-     * @param {string} key - The top-level state key to update.
-     * @param {*} value - The new value.
-     */
-    setState(key, value) {
-        if (key in this.state) {
-            this.state[key] = value;
-            console.log(`State updated: ${key} =`, value);
-        } else {
-            console.error(`Error: Invalid state key "${key}".`);
+    notify() {
+        for (const listener of this.listeners) {
+            listener(this);
         }
     }
 
-    /**
-     * Gets a specific clip's state.
-     * @param {number} row - The clip's row index.
-     * @param {number} col - The clip's column index.
-     * @returns {object} The clip object.
-     */
-    getClip(row, col) {
-        return this.state.clips[row]?.[col];
+    setClip(row, col, sample) {
+        if (this.grid[row] && this.grid[row][col]) {
+            this.grid[row][col].sample = sample;
+            this.notify();
+        }
     }
 
-    /**
-     * Updates a specific clip's state.
-     * @param {number} row - The clip's row index.
-     * @param {number} col - The clip's column index.
-     * @param {object} newClipState - The new state for the clip.
-     */
-    updateClip(row, col, newClipState) {
-        if (this.state.clips[row]?.[col]) {
-            Object.assign(this.state.clips[row][col], newClipState);
+    setClipState(row, col, state) {
+        if (this.grid[row] && this.grid[row][col]) {
+            this.grid[row][col].state = state;
+            this.notify();
+        }
+    }
+
+    setClipVolume(row, col, volume) {
+        if (this.grid[row] && this.grid[row][col]) {
+            this.grid[row][col].volume = volume;
+            this.notify();
+        }
+    }
+
+    toggleReplaceMode() {
+        this.isReplaceMode = !this.isReplaceMode;
+        this.notify();
+    }
+
+    setCurrentBeat(beat) {
+        if (this.currentBeat !== beat) {
+            this.currentBeat = beat;
+        }
+    }
+
+    toggleRecording() {
+        this.isRecording = !this.isRecording;
+        this.notify();
+    }
+
+    setRecordingStartTime(time) {
+        this.recordingStartTime = time;
+        this.notify();
+    }
+
+    setRecordedBlob(blob) {
+        this.recordedBlob = blob;
+        this.notify();
+    }
+
+    setTempo(newTempo) {
+        this.tempo = newTempo;
+        this.notify();
+    }
+
+    toggleTrackMute(colIndex) {
+        if (colIndex >= 0 && colIndex < this.cols) {
+            this.trackMutes[colIndex] = !this.trackMutes[colIndex];
+            // 음소거 시 솔로 해제
+            if (this.trackMutes[colIndex] && this.trackSolos[colIndex]) {
+                this.trackSolos[colIndex] = false;
+            }
+            this.notify();
+        }
+    }
+
+    toggleTrackSolo(colIndex) {
+        if (colIndex >= 0 && colIndex < this.cols) {
+            this.trackSolos[colIndex] = !this.trackSolos[colIndex];
+            // 솔로 시 다른 모든 트랙 음소거
+            if (this.trackSolos[colIndex]) {
+                for (let i = 0; i < this.cols; i++) {
+                    if (i !== colIndex) {
+                        this.trackMutes[i] = true;
+                        this.trackSolos[i] = false; // 다른 솔로 해제
+                    }
+                }
+                this.trackMutes[colIndex] = false; // 솔로 트랙은 음소거 해제
+            } else {
+                // 솔로 해제 시 모든 트랙 음소거 해제 (다른 솔로 트랙이 없는 경우)
+                const anyOtherSolo = this.trackSolos.some((isSolo, idx) => isSolo && idx !== colIndex);
+                if (!anyOtherSolo) {
+                    this.trackMutes.fill(false);
+                }
+            }
+            this.notify();
+        }
+    }
+
+    resetGridAndTempo() {
+        this.grid = Array(this.rows).fill(null).map(() => Array(this.cols).fill(null).map(() => ({
+            sample: null,
+            state: 'stopped',
+            volume: 0.8
+        })));
+        this.tempo = 120;
+        this.trackMutes.fill(false);
+        this.trackSolos.fill(false);
+        this.notify();
+    }
+
+    // 현재 상태를 내보내는 메소드
+    getState() {
+        return {
+            grid: this.grid,
+            tempo: this.tempo,
+            trackMutes: this.trackMutes,
+            trackSolos: this.trackSolos,
+        };
+    }
+
+    // 외부 상태로 앱 상태를 설정하는 메소드
+    setState(newState) {
+        // 간단한 유효성 검사
+        if (newState && newState.grid && newState.tempo) {
+            this.grid = newState.grid;
+            this.tempo = newState.tempo;
+            this.trackMutes = newState.trackMutes || Array(this.cols).fill(false);
+            this.trackSolos = newState.trackSolos || Array(this.cols).fill(false);
+            
+            // 다른 상태들도 필요에 따라 복원
+            this.isReplaceMode = false;
+            this.currentBeat = 0;
+            this.isRecording = false;
+            this.recordedBlob = null;
+
+            console.log('App state restored from preset.');
+            this.notify();
+        } else {
+            console.error('Invalid state object for setState.');
         }
     }
 }

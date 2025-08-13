@@ -1,29 +1,357 @@
-/* Main application styles */
-body {
+/* Basic Styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #1a1a1a;
+    color: #ffffff;
     font-family: sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    margin: 0;
 }
 
 #app {
-    width: 95%;
-    max-width: 1200px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    height: 95vh; /* 화면 높이의 95% */
+    aspect-ratio: 2360 / 1640; /* iPad Air 가로 비율 */
+    display: flex;
+    flex-direction: row; /* 그리드와 패널을 가로로 배치 */
+    background-color: #2c2c2c;
     padding: 20px;
-}
-
-.controls {
-    margin-bottom: 20px;
+    box-sizing: border-box;
+    gap: 20px; /* 그리드와 패널 사이 간격 */
 }
 
 #grid-container {
+    flex-grow: 1; /* 남은 공간을 그리드 컨테이너가 차지 */
+    display: flex;
+    flex-direction: column; /* 헤더와 그리드 셀 래퍼를 세로로 쌓음 */
+    gap: 8px; /* 헤더와 그리드 셀 래퍼 사이 간격 */
+    background-color: #282828;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#track-header-controls {
     display: grid;
+    gap: 8px; /* 그리드와 동일한 간격 */
+    height: 30px; /* M/S 버튼 컨테이너 높이 줄임 */
+    box-sizing: border-box;
+}
+
+.track-control-group {
+    display: flex;
+    justify-content: center; /* 중앙 정렬 */
+    align-items: center;
+    gap: 4px;
+}
+
+.track-control-button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+/* Mute Button Colors */
+.mute-button {
+    background-color: #00008B; /* Dark Blue - Inactive */
+    color: #fff;
+}
+
+.mute-button.active {
+    background-color: #007BFF; /* Bright Blue - Active */
+}
+
+.mute-button:hover {
+    filter: brightness(1.2); /* Hover effect */
+}
+
+/* Solo Button Colors */
+.solo-button {
+    background-color: #8B0000; /* Dark Red - Inactive */
+    color: #fff;
+}
+
+.solo-button.active {
+    background-color: #FF0000; /* Bright Red - Active */
+}
+
+.solo-button:hover {
+    filter: brightness(1.2); /* Hover effect */
+}
+
+#grid-cells-wrapper {
+    flex-grow: 1; /* 남은 공간을 그리드 셀 래퍼가 차지 */
+    display: grid;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+#right-panel {
+    flex-shrink: 0; /* 크기 줄어들지 않도록 */
+    width: 200px; /* 고정 너비 설정 (예시) */
+    background-color: #3a3a3a;
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-button {
+    background-color: #6c757d;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.control-button:hover {
+    background-color: #5a6268;
+}
+
+.control-button.active {
+    background-color: #007bff;
+}
+
+.control-button.active:hover {
+    background-color: #0056b3;
+}
+
+.grid-cell {
+    --base-color: #555; /* Default base color for empty cells */
+    background-color: var(--base-color);
+    border: 1px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    box-sizing: border-box;
+    /* Add filter to the transition for smooth state changes */
+    transition: background-color 0.2s, color 0.2s, filter 0.2s;
+    position: relative;
+    overflow: hidden;
+    filter: brightness(0.5) saturate(1); /* Brighter and more saturated for pending */
+
+}
+
+/* When a sample is loaded, the column color is applied. */
+.grid-cell.has-sample {
+    filter: brightness(0.9) saturate(1); /* Brighter and more saturated for pending */
+}
+
+.grid-cell:hover {
+    filter: brightness(1.1); /* Slightly brighten on hover */
+}
+
+.clip-name {
+    font-size: 11px;
+    color: #1c1c1c;
+    word-break: break-word;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+.clip-volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 90%;
+    height: 8px;
+    background: #bbb;
+    outline: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+    z-index: 1;
+}
+
+.clip-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #555;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* State-based colors using filters on the base color */
+.grid-cell.pending {
+    filter: brightness(1.0) saturate(1.2); /* Brighter and more saturated for pending */
+    color: #000;
+}
+
+.grid-cell.playing {
+    filter: brightness(1.1) saturate(1.2); /* Even more saturated and slightly bright for playing */
+    color: #fff;
+}
+/* Prevent playing cells from being affected by hover's brightness filter */
+.grid-cell.playing:hover {
+    filter: brightness(1.1) saturate(1.5);
+}
+
+.grid-cell.stopping {
+    filter: grayscale(0.6) brightness(0.7); /* Desaturated and darker for stopping */
+    color: #fff;
+}
+
+/* --- Column-specific colors (using CSS variables) --- */
+.grid-cell.col-0 { --base-color: #FFADAD; }
+.grid-cell.col-1 { --base-color: #FFD6A5; }
+.grid-cell.col-2 { --base-color: #FDFFB6; }
+.grid-cell.col-3 { --base-color: #CAFFBF; }
+.grid-cell.col-4 { --base-color: #9BF6FF; }
+.grid-cell.col-5 { --base-color: #A0C4FF; }
+.grid-cell.col-6 { --base-color: #BDB2FF; }
+.grid-cell.col-7 { --base-color: #FFC6FF; }
+.grid-cell.col-8 { --base-color: #FFFFFC; }
+.grid-cell.col-9 { --base-color: #EAE4E9; }
+
+
+/* --- Beat Highlight Animation --- */
+.grid-cell.current-beat {
+    animation: beat-flash 0.4s ease-out;
+}
+
+@keyframes beat-flash {
+    50% {
+        /* Use a white glow effect that doesn't hide the color */
+        box-shadow: inset 0 0 15px 15px rgba(255, 255, 255, 0.8);
+        transform: scale(1.1); /* 5% 커졌다가 돌아옵니다. */
+    }
+}
+
+/* A special style for cells whose samples need to be relinked */
+.grid-cell.needs-relink {
+    background-color: #808080; /* Gray background */
+    filter: none; /* Reset other filters */
+}
+
+.grid-cell.needs-relink::after {
+    content: '?';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    color: #fff;
+    font-weight: bold;
+}
+
+
+/* 템포 조절 슬라이더 및 레이블 스타일 */
+#tempo-control-div {
+    display: flex;
+    flex-direction: column;
     gap: 5px;
 }
+
+#tempo-label {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.control-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #444;
+    outline: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.control-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #e8e8e8;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* --- Modal Styles --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sample-list-container {
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    background-color: #222;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.sample-item {
+    background-color: #444;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.sample-item:hover {
+    background-color: #555;
+}
+
+.folder-item {
+    background-color: #666; /* Different color for folders */
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.folder-item:hover {
+    background-color: #777;
+}
+

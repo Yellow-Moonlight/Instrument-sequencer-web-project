@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,28 @@
 </head>
 <body>
     <div id="app">
-        <header class="controls">
-            <h1>Instrument Sequencer</h1>
-            <!-- Controls will be generated here -->
-        </header>
-        <main id="grid-container">
-            <!-- The sequencer grid will be generated here -->
-        </main>
+        <div id="grid-container">
+            <div id="track-header-controls"></div> <!-- M/S buttons here -->
+            <div id="grid-cells-wrapper"></div> <!-- 8x10 grid cells here -->
+        </div>
+        <div id="right-panel"></div> <!-- Right panel controls here -->
     </div>
+
+    <!-- Preset Import File Input (Hidden) -->
+    <input type="file" id="import-preset-file-input" accept=".json,.sequencer-preset" style="display: none;">
+
+    <!-- Sample Library Modal -->
+    <div id="sample-library-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="modal-title">Sample Library</h2>
+            <button id="back-button" class="control-button" style="display: none; margin-bottom: 10px;">Back</button>
+            <div id="sample-list" class="sample-list-container">
+                <!-- Folders and Sample items will be populated here by JS -->
+            </div>
+            <button id="close-modal-button" class="control-button">Close</button>
+        </div>
+    </div>
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
